@@ -1,0 +1,99 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #0b0618; font-family: Impact, "Arial Black", sans-serif; }
+  .bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 900px 700px at 25% 60%, rgba(255, 0, 120, .55), transparent 60%),
+      radial-gradient(ellipse 900px 700px at 78% 40%, rgba(0, 200, 255, .55), transparent 60%),
+      linear-gradient(135deg, #1a0a3a 0%, #0b0618 55%, #001a2e 100%);
+  }
+  /* speed rays */
+  .rays { position: absolute; inset: -400px; background: repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,255,255,.06) 0deg 6deg, transparent 6deg 14deg); }
+  .floor { position: absolute; left: 0; right: 0; bottom: 0; height: 320px;
+    background: linear-gradient(to top, #103a1a, transparent), repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 2px, transparent 2px 120px); transform: perspective(600px) rotateX(55deg); transform-origin: bottom; }
+
+  .title { position: absolute; left: 60px; top: 40px; font-size: 150px; line-height: .9; color: #ffd400; letter-spacing: 2px;
+    text-shadow: 0 0 30px rgba(255, 212, 0, .8);
+    -webkit-text-stroke: 5px #000; paint-order: stroke fill; transform: rotate(-4deg); }
+  .title span { display: block; color: #fff; font-size: 130px; -webkit-text-stroke: 5px #000; text-shadow: 0 0 30px rgba(255,255,255,.6); }
+
+  .hook { position: absolute; right: 50px; top: 90px; width: 760px; text-align: center; font-size: 96px; line-height: .95; color: #fff;
+    -webkit-text-stroke: 5px #000; paint-order: stroke fill; transform: rotate(3deg);
+    text-shadow: 0 8px 0 #000, 0 0 40px rgba(255, 0, 80, .9); }
+  .hook em { font-style: normal; color: #ff2d55; font-size: 120px; display: block; }
+
+  /* characters: neon cube + ball head, like in-game placeholders */
+  .char { position: absolute; width: 220px; height: 300px; }
+  .char .head { position: absolute; left: 35px; top: 0; width: 150px; height: 150px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #fff, var(--accent) 55%, #000 130%); box-shadow: 0 0 40px var(--accent); }
+  .char .body { position: absolute; left: 10px; top: 130px; width: 200px; height: 170px; border-radius: 22px;
+    background: linear-gradient(160deg, var(--c1), var(--c2)); box-shadow: 0 0 60px var(--c1), inset 0 -20px 40px rgba(0,0,0,.4); }
+  .char .eye { position: absolute; top: 50px; width: 28px; height: 40px; background: #000; border-radius: 50%; }
+  .char .eye.l { left: 70px; } .char .eye.r { left: 125px; }
+  .char .eye::after { content: ""; position: absolute; left: 6px; top: 6px; width: 10px; height: 12px; background: #fff; border-radius: 50%; }
+  .char .mouth { position: absolute; left: 80px; top: 100px; width: 60px; height: 30px; border-radius: 0 0 40px 40px; background: #000; }
+  .char .mouth.scared { width: 40px; height: 48px; left: 92px; top: 92px; border-radius: 50%; }
+  .char .grin { width: 90px; height: 24px; left: 65px; top: 105px; border-radius: 0 0 50px 50px; background: #fff; border: 4px solid #000; }
+  .char .label { position: absolute; left: -40px; top: 310px; width: 300px; text-align: center; font-size: 46px; color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+
+  .secret { --accent: #ff00ff; --c1: #2a2a2a; --c2: #000; left: 1140px; top: 500px; transform: rotate(8deg) scale(1.25); }
+  .secret .body { box-shadow: 0 0 80px #ff00ff, 0 0 160px #ff00ff; }
+  .thief { --accent: #ff4b4b; --c1: #7a00c8; --c2: #3a0060; left: 760px; top: 470px; transform: rotate(-10deg) scale(1.1); }
+  .victim { --accent: #ffe08a; --c1: #ffb400; --c2: #b06a00; left: 250px; top: 520px; transform: rotate(6deg); }
+
+  .arm { position: absolute; height: 36px; background: linear-gradient(90deg, #7a00c8, #ff4b4b); border-radius: 18px; box-shadow: 0 0 30px #ff4b4b; }
+
+  .burst { position: absolute; left: 1080px; top: 360px; width: 520px; height: 520px; border-radius: 50%; border: 18px solid #ff2d55;
+    box-shadow: 0 0 60px #ff2d55, inset 0 0 60px rgba(255,45,85,.5); transform: rotate(-8deg); }
+  .arrow { position: absolute; left: 880px; top: 300px; font-size: 260px; color: #ff2d55; -webkit-text-stroke: 8px #000; paint-order: stroke fill; transform: rotate(35deg);
+    text-shadow: 0 0 40px #ff2d55; font-family: "Segoe UI Symbol", "Arial Black", sans-serif; }
+
+  .badge { position: absolute; left: 60px; bottom: 60px; background: #ff2d55; color: #fff; font-size: 70px; padding: 14px 40px; border-radius: 20px; transform: rotate(-6deg);
+    border: 6px solid #000; box-shadow: 0 10px 0 #000, 0 0 40px #ff2d55; }
+  .stolen { position: absolute; left: 1060px; top: 900px; font-size: 130px; color: #ff2d55; -webkit-text-stroke: 7px #000; paint-order: stroke fill; transform: rotate(-6deg);
+    text-shadow: 0 0 50px #ff2d55; }
+
+  .coin { position: absolute; width: 70px; height: 70px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff6a8, #ffd400 45%, #b8860b 100%);
+    border: 5px solid #000; box-shadow: 0 0 25px #ffd400; }
+  .coin::after { content: "$"; position: absolute; inset: 0; text-align: center; line-height: 60px; font-size: 44px; color: #7a5200; font-family: Impact; }
+  .emoji { position: absolute; font-family: "Segoe UI Emoji"; }
+</style>
+</head>
+<body>
+  <div class="bg"></div>
+  <div class="rays"></div>
+  <div class="floor"></div>
+
+  <div class="title">STEAL THE<span>CLOUT</span></div>
+
+  <div class="hook">HE STOLE MY <em>SECRET</em> CHARACTER?!</div>
+
+  <div class="burst"></div>
+  <div class="arrow">&#10148;</div>
+
+  <div class="char victim"><div class="head"><div class="eye l"></div><div class="eye r"></div><div class="mouth scared"></div></div><div class="body"></div><div class="label">ME</div></div>
+  <div class="emoji" style="left:60px; top:330px; font-size:170px; transform: rotate(-12deg);">😱</div>
+
+  <div class="char thief"><div class="head"><div class="eye l"></div><div class="eye r"></div><div class="mouth grin"></div></div><div class="body"></div></div>
+  <div class="arm" style="left: 960px; top: 640px; width: 220px; transform: rotate(-12deg);"></div>
+
+  <div class="char secret"><div class="head"><div class="eye l"></div><div class="eye r"></div><div class="mouth scared"></div></div><div class="body"></div></div>
+
+  <div class="stolen">STOLEN!</div>
+
+  <div class="coin" style="left:600px; top:560px;"></div>
+  <div class="coin" style="left:660px; top:640px; width:55px; height:55px;"></div>
+  <div class="coin" style="left:1480px; top:520px;"></div>
+  <div class="coin" style="left:1620px; top:640px; width:90px; height:90px;"></div>
+  <div class="coin" style="left:1560px; top:760px; width:60px; height:60px;"></div>
+  <div class="coin" style="left:120px; top:820px; width:60px; height:60px;"></div>
+  <div class="emoji" style="left:1700px; top:300px; font-size:120px;">💰</div>
+  <div class="emoji" style="left:1760px; top:820px; font-size:110px;">🥚</div>
+
+  <div class="badge">NEW! FREE TO PLAY</div>
+</body>
+</html>
