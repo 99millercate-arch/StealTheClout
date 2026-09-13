@@ -1,3 +1,4 @@
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Modules = ReplicatedStorage:WaitForChild("Modules")
@@ -6,7 +7,22 @@ local GameConfig = require(Modules.GameConfig)
 
 local plotsFolder = workspace:WaitForChild("Plots")
 
-local function updatePad(pad)
+local vipPass
+for _, pass in ipairs(GameConfig.MONETIZATION.Passes) do
+	if pass.Key == "VIP" then
+		vipPass = pass
+	end
+end
+
+local function incomeMultiplier(plot)
+	local owner = Players:GetPlayerByUserId(plot:GetAttribute("OwnerUserId"))
+	if vipPass and owner and owner:GetAttribute("Pass_" .. vipPass.Key) then
+		return vipPass.IncomeMultiplier
+	end
+	return 1
+end
+
+local function updatePad(pad, multiplier)
 	if not pad:GetAttribute("Occupied") then
 		return
 	end
@@ -16,9 +32,10 @@ local function updatePad(pad)
 		return
 	end
 
-	local maxStorage = charData.Income * GameConfig.MAX_STORAGE_SECONDS
+	local income = charData.Income * multiplier
+	local maxStorage = income * GameConfig.MAX_STORAGE_SECONDS
 	local stored = math.min(
-		pad:GetAttribute("StoredValue") + charData.Income * GameConfig.INCOME_TICK,
+		pad:GetAttribute("StoredValue") + income * GameConfig.INCOME_TICK,
 		maxStorage
 	)
 	pad:SetAttribute("StoredValue", stored)
@@ -37,8 +54,9 @@ while true do
 	for _, plot in ipairs(plotsFolder:GetChildren()) do
 		local pads = plot:FindFirstChild("Pads")
 		if pads then
+			local multiplier = incomeMultiplier(plot)
 			for _, pad in ipairs(pads:GetChildren()) do
-				updatePad(pad)
+				updatePad(pad, multiplier)
 			end
 		end
 	end

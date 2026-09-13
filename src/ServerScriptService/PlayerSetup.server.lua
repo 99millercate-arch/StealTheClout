@@ -8,6 +8,7 @@ local DataManager = require(ServerModules.DataManager)
 local PlacementService = require(ServerModules.PlacementService)
 local PlayerState = require(ServerModules.PlayerState)
 local PlotManager = require(ServerModules.PlotManager)
+local ProtectionService = require(ServerModules.ProtectionService)
 
 local function onPlayerAdded(player)
 	local data = DataManager.Load(player)
@@ -27,6 +28,12 @@ local function onPlayerAdded(player)
 	local plot = PlotManager.AssignPlot(player)
 	if plot then
 		local pads = plot:FindFirstChild("Pads")
+		for padIndex, level in ipairs(data.PadLocks) do
+			local pad = pads and pads:FindFirstChild("Pad" .. padIndex)
+			if pad then
+				ProtectionService.SetLockLevel(pad, level)
+			end
+		end
 		for _, entry in ipairs(data.Placed) do
 			local pad = pads and pads:FindFirstChild("Pad" .. tostring(entry.PadIndex))
 			if pad then
@@ -48,11 +55,13 @@ local function onPlayerRemoving(player)
 	local state = PlayerState.Get(player)
 
 	local placed = {}
+	local padLocks = {}
 	local plot = PlotManager.GetPlotByOwner(player)
 	if plot then
 		local pads = plot:FindFirstChild("Pads")
 		if pads then
 			for _, pad in ipairs(pads:GetChildren()) do
+				padLocks[pad:GetAttribute("PadIndex")] = pad:GetAttribute("LockLevel") or 0
 				if pad:GetAttribute("Occupied") then
 					table.insert(placed, {
 						PadIndex = pad:GetAttribute("PadIndex"),
@@ -68,8 +77,12 @@ local function onPlayerRemoving(player)
 		Coins = leaderstats and leaderstats.Coins.Value or 0,
 		Inventory = state and state.Inventory or {},
 		Placed = placed,
+		PadLocks = padLocks,
 	})
 
+	if plot then
+		ProtectionService.ClearPlot(plot)
+	end
 	PlotManager.ReleasePlot(player, PlacementService.ClearPad)
 	PlayerState.Clear(player)
 end

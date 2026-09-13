@@ -8,6 +8,7 @@ local GameConfig = require(Modules.GameConfig)
 local Remotes = require(Modules.Remotes)
 
 local PlayerState = require(script.Parent.PlayerState)
+local ProtectionService = require(script.Parent.ProtectionService)
 
 local PlacementService = {}
 
@@ -19,6 +20,20 @@ function PlacementService.ClearPad(pad)
 	pad:SetAttribute("Occupied", false)
 	pad:SetAttribute("CharacterId", "")
 	pad:SetAttribute("StoredValue", 0)
+	pad:SetAttribute("PlacedAt", 0)
+end
+
+-- Banks whatever the pad has stored into the owner's coins. Used by the owner's E-hold
+-- and by the Auto-Collect pass.
+function PlacementService.CollectPad(pad, owner)
+	local leaderstats = owner:FindFirstChild("leaderstats")
+	if not leaderstats or not pad:GetAttribute("Occupied") then
+		return 0
+	end
+	local amount = math.floor(pad:GetAttribute("StoredValue"))
+	leaderstats.Coins.Value += amount
+	pad:SetAttribute("StoredValue", 0)
+	return amount
 end
 
 local function onPromptTriggered(plot, pad, triggeringPlayer)
@@ -36,12 +51,15 @@ local function onPromptTriggered(plot, pad, triggeringPlayer)
 	local ownerUserId = plot:GetAttribute("OwnerUserId")
 
 	if triggeringPlayer.UserId == ownerUserId then
-		leaderstats.Coins.Value += storedValue
-		pad:SetAttribute("StoredValue", 0)
+		PlacementService.CollectPad(pad, triggeringPlayer)
 		return
 	end
 
 	if not PlayerState.Get(triggeringPlayer) then
+		return
+	end
+
+	if not ProtectionService.TrySteal(plot, pad, triggeringPlayer) then
 		return
 	end
 
@@ -56,6 +74,7 @@ local function onPromptTriggered(plot, pad, triggeringPlayer)
 	end
 
 	PlacementService.ClearPad(pad)
+	ProtectionService.OnPadStolen(pad)
 end
 
 function PlacementService.SpawnCharacterOnPad(plot, pad, characterId, storedValue)
@@ -74,6 +93,7 @@ function PlacementService.SpawnCharacterOnPad(plot, pad, characterId, storedValu
 	pad:SetAttribute("Occupied", true)
 	pad:SetAttribute("CharacterId", characterId)
 	pad:SetAttribute("StoredValue", storedValue or 0)
+	pad:SetAttribute("PlacedAt", workspace:GetServerTimeNow()) -- starts the anti-steal grace window
 
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.ObjectText = charData.Name

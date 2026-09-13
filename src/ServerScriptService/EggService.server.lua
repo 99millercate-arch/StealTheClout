@@ -24,8 +24,27 @@ local function rollRarity(odds)
 	return "Common"
 end
 
-local function rollCharacter(egg)
-	local pool = CharacterData.ByRarity[rollRarity(egg.Odds)]
+local luckyPass
+for _, pass in ipairs(GameConfig.MONETIZATION.Passes) do
+	if pass.Key == "LuckyEggs" then
+		luckyPass = pass
+	end
+end
+
+-- Lucky Eggs pass: scale up the top-tier weights before rolling
+local function oddsFor(player, egg)
+	if not (luckyPass and player:GetAttribute("Pass_" .. luckyPass.Key)) then
+		return egg.Odds
+	end
+	local odds = table.clone(egg.Odds)
+	for _, rarity in ipairs({ "Legendary", "Mythic", "Secret" }) do
+		odds[rarity] = (odds[rarity] or 0) * luckyPass.RareOddsMultiplier
+	end
+	return odds
+end
+
+local function rollCharacter(player, egg)
+	local pool = CharacterData.ByRarity[rollRarity(oddsFor(player, egg))]
 	if not pool or #pool == 0 then
 		return nil
 	end
@@ -48,7 +67,7 @@ local function attemptBuy(player, eggName)
 		return { success = false, reason = "Still loading" }
 	end
 
-	local characterId = rollCharacter(egg)
+	local characterId = rollCharacter(player, egg)
 	if not characterId then
 		return { success = false, reason = "Roll failed" }
 	end

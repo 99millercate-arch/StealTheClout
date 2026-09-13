@@ -7,6 +7,9 @@ local DEFINITIONS = {
 	PlaceCharacter = "RemoteEvent",
 	InventoryUpdated = "RemoteEvent",
 	StolenNotice = "RemoteEvent",
+	Notify = "RemoteEvent", -- server -> client: (text, color, duration)
+	ActivateShield = "RemoteFunction",
+	BuyPadLock = "RemoteFunction", -- (padIndex)
 }
 
 local remotes = {}

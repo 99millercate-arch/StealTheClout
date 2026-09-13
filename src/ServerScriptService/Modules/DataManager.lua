@@ -13,6 +13,7 @@ function DataManager.Load(player)
 		result.Coins = result.Coins or 0
 		result.Inventory = result.Inventory or {}
 		result.Placed = result.Placed or {}
+		result.PadLocks = result.PadLocks or {}
 		return result
 	end
 
@@ -20,7 +21,7 @@ function DataManager.Load(player)
 		warn("Failed to load data for " .. player.Name .. ": " .. tostring(result))
 	end
 
-	return { Coins = 100, Inventory = {}, Placed = {} }
+	return { Coins = 100, Inventory = {}, Placed = {}, PadLocks = {} }
 end
 
 function DataManager.Save(player, data)

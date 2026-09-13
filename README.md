@@ -20,7 +20,7 @@ You can rename/restyle the whole roster in one file: `src/ReplicatedStorage/Modu
 ## Gameplay loop
 
 1. Spawn in, get auto-assigned an empty plot (12 plots, 4 pads each).
-2. Buy an egg — at the yellow shop stall (hold E) or via the shop panel in the top-right UI.
+2. Buy an egg — at the yellow shop stall (hold E) or via the **Shop** panel (right-side menu).
 3. Eggs roll a random character weighted by rarity: Common → Rare → Epic → Legendary → Mythic → Secret.
 4. Click a character in your inventory bar, then click an empty pad on your plot to place it.
 5. Placed characters generate coins into local storage (capped at 120 seconds of income).
@@ -29,6 +29,34 @@ You can rename/restyle the whole roster in one file: `src/ReplicatedStorage/Modu
 
 That last step is the whole game: uncollected income is the risk, and full storage bars
 (the value label turns red at cap) are what thieves hunt for.
+
+### Keeping your clout safe
+
+The **Protect** panel sells three layers of defence, all paid in coins (`GameConfig.PROTECTION`):
+
+| Defence | What it does | Default |
+|---|---|---|
+| Placement grace | Freshly placed (or restored-on-rejoin) characters can't be stolen for a while | 30s, free |
+| Plot Shield | Blocks every steal on your plot; a blue dome shows it's up | 200 coins, 60s, 120s cooldown |
+| Pad Lock | Per-pad, 3 levels. A thief must complete one extra E-hold per level to crack it before the steal lands. Lock HP refills if they give up for 20s; the lock stays after a steal | 150 / 400 / 1000 coins |
+
+Thieves and owners both get on-screen notices while a lock is being cracked. Your own collect
+is never blocked.
+
+### Robux
+
+`GameConfig.MONETIZATION` defines the **Robux** panel. Everything ships with `Id = 0` and shows
+as "coming soon" until you create the items on the Creator Dashboard and paste the ids in:
+
+- **Developer Products** (consumable): 500 / 2,500 / 10,000 coin packs, and a 5-minute shield.
+  Granted server-side in `Monetization.server.lua` via `ProcessReceipt`.
+- **Game Passes** (permanent): *VIP* (2x income), *Auto-Collect* (banks your plot every 60s),
+  *Lucky Eggs* (2x odds for Legendary/Mythic/Secret). Ownership is mirrored to `Pass_<Key>`
+  attributes on the Player, which the income loop, egg roller and UI read.
+
+To set them up: Creator Dashboard → your experience → Monetization → *Passes* / *Developer Products*,
+create each item, copy its id into the matching entry, and publish. Studio can test purchases
+against real ids without charging Robux.
 
 ## Setup
 
@@ -64,11 +92,13 @@ Create these instances in Studio and paste in each file's contents. **Instance t
 | `ServerScriptService/Modules/DataManager` | ModuleScript | `src/ServerScriptService/Modules/DataManager.lua` |
 | `ServerScriptService/Modules/PlotManager` | ModuleScript | `src/ServerScriptService/Modules/PlotManager.lua` |
 | `ServerScriptService/Modules/PlacementService` | ModuleScript | `src/ServerScriptService/Modules/PlacementService.lua` |
+| `ServerScriptService/Modules/ProtectionService` | ModuleScript | `src/ServerScriptService/Modules/ProtectionService.lua` |
 | `ServerScriptService/MapBuilder` | Script | `src/ServerScriptService/MapBuilder.server.lua` |
 | `ServerScriptService/PlayerSetup` | Script | `src/ServerScriptService/PlayerSetup.server.lua` |
 | `ServerScriptService/PlacementHandler` | Script | `src/ServerScriptService/PlacementHandler.server.lua` |
 | `ServerScriptService/EggService` | Script | `src/ServerScriptService/EggService.server.lua` |
 | `ServerScriptService/IncomeLoop` | Script | `src/ServerScriptService/IncomeLoop.server.lua` |
+| `ServerScriptService/Monetization` | Script | `src/ServerScriptService/Monetization.server.lua` |
 | `StarterPlayer/StarterPlayerScripts/ClientUI` | LocalScript | `src/StarterPlayer/StarterPlayerScripts/ClientUI.client.lua` |
 
 The `.server` / `.client` suffixes are Rojo conventions for Script vs LocalScript — drop them when naming instances manually.
@@ -88,6 +118,8 @@ Everything numeric lives in `src/ReplicatedStorage/Modules/GameConfig.lua`:
 - `MAX_STORAGE_SECONDS` — income cap per character (120s). Lower = must collect more often.
 - `PADS_PER_PLOT` / `NUM_PLOTS` — plot capacity and server capacity.
 - `EGGS` — costs and per-rarity odds for Basic (50) and Premium (500).
+- `PROTECTION` — grace window, shield cost/duration/cooldown, pad-lock levels and prices.
+- `MONETIZATION` — Robux product and pass definitions (see above).
 
 Character stats and colors live in `CharacterData.lua`. Adding a character is one table entry;
 rarity pools and egg odds pick it up automatically.
@@ -102,7 +134,7 @@ rarity pools and egg odds pick it up automatically.
 - **ProximityPrompt trust.** Roblox validates prompt range server-side, but a determined exploiter
   can still spam triggers. Add a server-side distance re-check in `PlacementService.onPromptTriggered`
   before shipping publicly.
-- **No steal cooldown or protection window.** Consider a grace period after placing, or a
-  per-thief cooldown, if testing shows spawn-camping.
-- Obvious next features: trading, a character index/collection book, rebirths, gamepass eggs,
-  a "lock pad" upgrade that slows steals.
+- **Receipt de-duplication is in-memory.** `Monetization.server.lua` remembers handled
+  `PurchaseId`s per server; move that to a DataStore before real money is involved.
+- Obvious next features: trading, a character index/collection book, rebirths, a per-thief
+  steal cooldown if testing shows spawn-camping.

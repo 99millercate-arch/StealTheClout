@@ -48,6 +48,8 @@ local function buildPlot(index, plotsFolder)
 	plot.Name = "Plot" .. index
 	plot:SetAttribute("PlotIndex", index)
 	plot:SetAttribute("OwnerUserId", 0)
+	plot:SetAttribute("ShieldUntil", 0)
+	plot:SetAttribute("ShieldCooldownUntil", 0)
 
 	local platform = Instance.new("Part")
 	platform.Name = "Platform"
@@ -85,6 +87,9 @@ local function buildPlot(index, plotsFolder)
 		pad:SetAttribute("Occupied", false)
 		pad:SetAttribute("CharacterId", "")
 		pad:SetAttribute("StoredValue", 0)
+		pad:SetAttribute("PlacedAt", 0) -- see ProtectionService for these three
+		pad:SetAttribute("LockLevel", 0)
+		pad:SetAttribute("LockHP", 0)
 		pad.Parent = pads
 	end
 
