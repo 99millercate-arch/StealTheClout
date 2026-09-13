@@ -41,7 +41,16 @@ rojo serve
 Then connect from the Rojo plugin inside Roblox Studio. `default.project.json` maps
 `src/` onto the right services. Press Play — the map, remotes, and UI all build themselves at runtime.
 
-### Option B — Manual (no Rojo)
+### Option B — Generated place file (no Rojo)
+
+```bash
+bash scripts/gen-rbxlx.sh
+```
+
+Builds `build/StealTheClout.rbxlx` straight from `src/` with every script in the right service and
+instance type. Open it in Studio and press Play. Re-run after editing `src/` (needs Git Bash on Windows).
+
+### Option C — Manual (no tooling)
 
 Create these instances in Studio and paste in each file's contents. **Instance type matters:**
 
