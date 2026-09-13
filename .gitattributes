@@ -1,0 +1,2 @@
+# Keep shell scripts LF so they run under Git Bash regardless of core.autocrlf
+*.sh text eol=lf
