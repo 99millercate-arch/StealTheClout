@@ -1,7 +1,7 @@
 return {
 	NUM_PLOTS = 12,
 	PLOTS_PER_ROW = 4,
-	PLOT_SPACING = 40,
+	PLOT_SPACING = 60,
 	PLOT_SIZE = Vector3.new(24, 1, 24),
 	PADS_PER_PLOT = 4,
 	PAD_SIZE = Vector3.new(5, 1, 5),
@@ -41,6 +41,15 @@ return {
 			Costs = { 150, 400, 1000 }, -- cost to go 0->1, 1->2, 2->3
 			ResetSeconds = 20,
 		},
+	},
+
+	-- The house around your plot, bought one stage at a time (in this order). Each stage is
+	-- cosmetic AND gives a perk that helps keep clout inside. Applied in ProtectionService / IncomeLoop.
+	BUILDING = {
+		{ Key = "Walls", Name = "Walls", Cost = 250, Perk = "Placement grace lasts twice as long", GraceMultiplier = 2 },
+		{ Key = "Door", Name = "Door", Cost = 500, Perk = "Shield costs 150 and lasts 90s", ShieldCost = 150, ShieldDuration = 90 },
+		{ Key = "Roof", Name = "Roof", Cost = 1000, Perk = "Characters store 50% more coins before capping", StorageMultiplier = 1.5 },
+		{ Key = "Trim", Name = "Neon Trim", Cost = 2000, Perk = "+10% income on your plot", IncomeMultiplier = 1.1 },
 	},
 
 	-- Robux purchases. Ids are 0 until you create them on the Creator Dashboard

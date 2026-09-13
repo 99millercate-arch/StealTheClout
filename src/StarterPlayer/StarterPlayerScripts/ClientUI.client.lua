@@ -414,7 +414,7 @@ end
 local protectContent = makePanel("Protect", "Keep Your Clout Safe", "🛡", 2)
 makeLabel(
 	protectContent,
-	("New placements are safe for %ds. Shields block every steal on your plot. Locks make thieves hold E extra times."):format(
+	("New placements are safe for %ds. Build your house for perks, shield your plot, and lock your pads."):format(
 		PROTECTION.PLACE_GRACE_SECONDS
 	),
 	56,
@@ -431,20 +431,60 @@ shieldButton.MouseButton1Click:Connect(function()
 		return Remotes.ActivateShield:InvokeServer()
 	end)
 	if ok and result and result.success then
-		setStatus(("Shield up for %ds!"):format(PROTECTION.SHIELD.Duration), SHIELD_BLUE, 3)
+		setStatus(("Shield up for %ds!"):format(result.duration or PROTECTION.SHIELD.Duration), SHIELD_BLUE, 3)
 	else
 		setStatus((result and result.reason) or "Couldn't activate shield", Color3.fromRGB(255, 120, 120), 3)
 	end
 end)
 
-makeLabel(protectContent, "Pad Locks", 30, { order = 3, font = Enum.Font.GothamBold, color = ACCENT, align = Enum.TextXAlignment.Left })
+-- Your House: bought stage by stage, each with a perk
+local BUILDING = GameConfig.BUILDING
+
+-- Client-side mirror of HouseBuilder.PerkFor, driven by the replicated BuildLevel attribute
+local function perkFor(plot, key)
+	local level = plot and plot:GetAttribute("BuildLevel") or 0
+	for index, stage in ipairs(BUILDING) do
+		if stage.Key == key then
+			return index <= level and stage or nil
+		end
+	end
+	return nil
+end
+
+makeLabel(protectContent, "Your House", 30, { order = 3, font = Enum.Font.GothamBold, color = ACCENT, align = Enum.TextXAlignment.Left })
+
+local stageLabels = {}
+for index, stage in ipairs(BUILDING) do
+	local label = makeLabel(protectContent, "", 36, { order = 3 + index, align = Enum.TextXAlignment.Left, scaled = false })
+	label.TextSize = 14
+	label.TextYAlignment = Enum.TextYAlignment.Top
+	stageLabels[index] = label
+end
+
+local buildButton = makeButton(protectContent, "", 56, ACCENT)
+buildButton.LayoutOrder = 4 + #BUILDING
+buildButton.MouseButton1Click:Connect(function()
+	if not buildButton.Active then
+		return
+	end
+	local ok, result = pcall(function()
+		return Remotes.BuyBuilding:InvokeServer()
+	end)
+	if ok and result and result.success then
+		setStatus(("Built: %s!"):format(result.name), ACCENT, 3)
+	else
+		setStatus((result and result.reason) or "Couldn't build", Color3.fromRGB(255, 120, 120), 3)
+	end
+end)
+
+makeLabel(protectContent, "Pad Locks", 30, { order = 20, font = Enum.Font.GothamBold, color = ACCENT, align = Enum.TextXAlignment.Left })
 
 local lockRows = {}
 for padIndex = 1, GameConfig.PADS_PER_PLOT do
 	local row = Instance.new("Frame")
 	row.Size = UDim2.new(1, 0, 0, 40)
 	row.BackgroundTransparency = 1
-	row.LayoutOrder = 3 + padIndex
+	row.LayoutOrder = 20 + padIndex
 	row.Parent = protectContent
 
 	local label = Instance.new("TextLabel")
@@ -570,6 +610,10 @@ local function refreshProtection()
 		return
 	end
 
+	local door = perkFor(plot, "Door")
+	local shieldCost = door and door.ShieldCost or PROTECTION.SHIELD.Cost
+	local shieldDuration = door and door.ShieldDuration or PROTECTION.SHIELD.Duration
+
 	local shieldLeft = (plot:GetAttribute("ShieldUntil") or 0) - now
 	local cooldownLeft = (plot:GetAttribute("ShieldCooldownUntil") or 0) - now
 
@@ -584,8 +628,23 @@ local function refreshProtection()
 		setButtonEnabled(shieldButton, false, SHIELD_BLUE)
 	else
 		shieldHud.Visible = false
-		shieldButton.Text = ("Activate Shield - %d coins (%ds)"):format(PROTECTION.SHIELD.Cost, PROTECTION.SHIELD.Duration)
+		shieldButton.Text = ("Activate Shield - %d coins (%ds)"):format(shieldCost, shieldDuration)
 		setButtonEnabled(shieldButton, true, SHIELD_BLUE)
+	end
+
+	local level = plot:GetAttribute("BuildLevel") or 0
+	for index, stage in ipairs(BUILDING) do
+		local built = index <= level
+		stageLabels[index].Text = ("%s %s - %s"):format(built and "[x]" or "[ ]", stage.Name, stage.Perk)
+		stageLabels[index].TextColor3 = built and Color3.fromRGB(150, 255, 150) or Color3.fromRGB(170, 170, 180)
+	end
+	local nextStage = BUILDING[level + 1]
+	if nextStage then
+		buildButton.Text = ("Build %s - %d coins"):format(nextStage.Name, nextStage.Cost)
+		setButtonEnabled(buildButton, true, ACCENT)
+	else
+		buildButton.Text = "House complete!"
+		setButtonEnabled(buildButton, false, ACCENT)
 	end
 
 	local pads = plot:FindFirstChild("Pads")

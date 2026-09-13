@@ -32,7 +32,18 @@ That last step is the whole game: uncollected income is the risk, and full stora
 
 ### Keeping your clout safe
 
-The **Protect** panel sells three layers of defence, all paid in coins (`GameConfig.PROTECTION`):
+Every plot starts as a bare floor with four pads. The **Protect** panel sells your house one stage
+at a time (`GameConfig.BUILDING`) - each stage is visible on the map and gives a perk:
+
+| Stage | Cost | Perk |
+|---|---|---|
+| Walls | 250 | Placement grace lasts twice as long |
+| Door | 500 | Shield costs 150 and lasts 90s; the shield becomes a barrier across the door |
+| Roof | 1,000 | Characters store 50% more coins before capping |
+| Neon Trim | 2,000 | +10% income on the plot |
+
+The town around the plots (roads, plaza, lamps, trees, shop kiosk) is free scenery built by
+`MapBuilder`; only the house is paid. It also sells three layers of defence (`GameConfig.PROTECTION`):
 
 | Defence | What it does | Default |
 |---|---|---|
@@ -93,6 +104,7 @@ Create these instances in Studio and paste in each file's contents. **Instance t
 | `ServerScriptService/Modules/PlotManager` | ModuleScript | `src/ServerScriptService/Modules/PlotManager.lua` |
 | `ServerScriptService/Modules/PlacementService` | ModuleScript | `src/ServerScriptService/Modules/PlacementService.lua` |
 | `ServerScriptService/Modules/ProtectionService` | ModuleScript | `src/ServerScriptService/Modules/ProtectionService.lua` |
+| `ServerScriptService/Modules/HouseBuilder` | ModuleScript | `src/ServerScriptService/Modules/HouseBuilder.lua` |
 | `ServerScriptService/MapBuilder` | Script | `src/ServerScriptService/MapBuilder.server.lua` |
 | `ServerScriptService/PlayerSetup` | Script | `src/ServerScriptService/PlayerSetup.server.lua` |
 | `ServerScriptService/PlacementHandler` | Script | `src/ServerScriptService/PlacementHandler.server.lua` |
@@ -116,9 +128,10 @@ Everything numeric lives in `src/ReplicatedStorage/Modules/GameConfig.lua`:
 
 - `STEAL_HOLD_TIME` — how long the E-hold takes (3s). Lower = more chaos.
 - `MAX_STORAGE_SECONDS` — income cap per character (120s). Lower = must collect more often.
-- `PADS_PER_PLOT` / `NUM_PLOTS` — plot capacity and server capacity.
+- `PADS_PER_PLOT` / `NUM_PLOTS` / `PLOT_SPACING` — plot capacity, server capacity, and how far apart the houses sit.
 - `EGGS` — costs and per-rarity odds for Basic (50) and Premium (500).
 - `PROTECTION` — grace window, shield cost/duration/cooldown, pad-lock levels and prices.
+- `BUILDING` — house stages: cost, perk text and perk values.
 - `MONETIZATION` — Robux product and pass definitions (see above).
 
 Character stats and colors live in `CharacterData.lua`. Adding a character is one table entry;

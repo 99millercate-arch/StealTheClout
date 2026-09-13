@@ -10,6 +10,7 @@ local DEFINITIONS = {
 	Notify = "RemoteEvent", -- server -> client: (text, color, duration)
 	ActivateShield = "RemoteFunction",
 	BuyPadLock = "RemoteFunction", -- (padIndex)
+	BuyBuilding = "RemoteFunction", -- buys the next house stage
 }
 
 local remotes = {}

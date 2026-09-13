@@ -5,6 +5,8 @@ local Modules = ReplicatedStorage:WaitForChild("Modules")
 local CharacterData = require(Modules.CharacterData)
 local GameConfig = require(Modules.GameConfig)
 
+local HouseBuilder = require(script.Parent.Modules.HouseBuilder)
+
 local plotsFolder = workspace:WaitForChild("Plots")
 
 local vipPass
@@ -14,15 +16,25 @@ for _, pass in ipairs(GameConfig.MONETIZATION.Passes) do
 	end
 end
 
-local function incomeMultiplier(plot)
+-- Income and storage-cap multipliers for a plot: VIP pass and house perks stack
+local function plotMultipliers(plot)
+	local income, storage = 1, 1
 	local owner = Players:GetPlayerByUserId(plot:GetAttribute("OwnerUserId"))
 	if vipPass and owner and owner:GetAttribute("Pass_" .. vipPass.Key) then
-		return vipPass.IncomeMultiplier
+		income *= vipPass.IncomeMultiplier
 	end
-	return 1
+	local trim = HouseBuilder.PerkFor(plot, "Trim")
+	if trim then
+		income *= trim.IncomeMultiplier
+	end
+	local roof = HouseBuilder.PerkFor(plot, "Roof")
+	if roof then
+		storage *= roof.StorageMultiplier
+	end
+	return income, storage
 end
 
-local function updatePad(pad, multiplier)
+local function updatePad(pad, incomeMultiplier, storageMultiplier)
 	if not pad:GetAttribute("Occupied") then
 		return
 	end
@@ -32,8 +44,8 @@ local function updatePad(pad, multiplier)
 		return
 	end
 
-	local income = charData.Income * multiplier
-	local maxStorage = income * GameConfig.MAX_STORAGE_SECONDS
+	local income = charData.Income * incomeMultiplier
+	local maxStorage = income * GameConfig.MAX_STORAGE_SECONDS * storageMultiplier
 	local stored = math.min(
 		pad:GetAttribute("StoredValue") + income * GameConfig.INCOME_TICK,
 		maxStorage
@@ -54,9 +66,9 @@ while true do
 	for _, plot in ipairs(plotsFolder:GetChildren()) do
 		local pads = plot:FindFirstChild("Pads")
 		if pads then
-			local multiplier = incomeMultiplier(plot)
+			local incomeMultiplier, storageMultiplier = plotMultipliers(plot)
 			for _, pad in ipairs(pads:GetChildren()) do
-				updatePad(pad, multiplier)
+				updatePad(pad, incomeMultiplier, storageMultiplier)
 			end
 		end
 	end

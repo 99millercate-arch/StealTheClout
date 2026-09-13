@@ -9,6 +9,7 @@ local PlacementService = require(ServerModules.PlacementService)
 local PlayerState = require(ServerModules.PlayerState)
 local PlotManager = require(ServerModules.PlotManager)
 local ProtectionService = require(ServerModules.ProtectionService)
+local HouseBuilder = require(ServerModules.HouseBuilder)
 
 local function onPlayerAdded(player)
 	local data = DataManager.Load(player)
@@ -27,6 +28,7 @@ local function onPlayerAdded(player)
 
 	local plot = PlotManager.AssignPlot(player)
 	if plot then
+		HouseBuilder.SetLevel(plot, data.BuildLevel)
 		local pads = plot:FindFirstChild("Pads")
 		for padIndex, level in ipairs(data.PadLocks) do
 			local pad = pads and pads:FindFirstChild("Pad" .. padIndex)
@@ -78,6 +80,7 @@ local function onPlayerRemoving(player)
 		Inventory = state and state.Inventory or {},
 		Placed = placed,
 		PadLocks = padLocks,
+		BuildLevel = plot and HouseBuilder.GetLevel(plot) or 0,
 	})
 
 	if plot then

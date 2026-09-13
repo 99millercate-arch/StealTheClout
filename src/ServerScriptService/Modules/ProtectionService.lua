@@ -9,6 +9,7 @@ local Modules = ReplicatedStorage:WaitForChild("Modules")
 local GameConfig = require(Modules.GameConfig)
 local Remotes = require(Modules.Remotes)
 
+local HouseBuilder = require(script.Parent.HouseBuilder)
 local PlotManager = require(script.Parent.PlotManager)
 
 local CONFIG = GameConfig.PROTECTION
@@ -30,6 +31,24 @@ end
 local function buildDome(plot)
 	local platform = plot:FindFirstChild("Platform")
 	if not platform or plot:FindFirstChild("ShieldDome") then
+		return
+	end
+
+	-- With a Door built, the shield is a barrier across the doorway instead of a dome
+	local doorway = plot:FindFirstChild("Doorway", true)
+	if doorway then
+		local barrier = Instance.new("Part")
+		barrier.Name = "ShieldDome"
+		barrier.Size = doorway.Size + Vector3.new(0, 0, 0.2)
+		barrier.CFrame = doorway.CFrame
+		barrier.Anchored = true
+		barrier.CanCollide = false
+		barrier.CanQuery = false
+		barrier.CastShadow = false
+		barrier.Material = Enum.Material.Neon
+		barrier.Color = Color3.fromRGB(80, 200, 255)
+		barrier.Transparency = 0.55
+		barrier.Parent = plot
 		return
 	end
 
@@ -73,6 +92,21 @@ function ProtectionService.GrantShield(plot, seconds)
 	end)
 end
 
+-- Shield cost and duration for this plot, after house perks
+function ProtectionService.ShieldTerms(plot)
+	local door = HouseBuilder.PerkFor(plot, "Door")
+	if door then
+		return door.ShieldCost, door.ShieldDuration
+	end
+	return CONFIG.SHIELD.Cost, CONFIG.SHIELD.Duration
+end
+
+-- Placement grace for this plot, after house perks
+function ProtectionService.GraceSeconds(plot)
+	local walls = HouseBuilder.PerkFor(plot, "Walls")
+	return CONFIG.PLACE_GRACE_SECONDS * (walls and walls.GraceMultiplier or 1)
+end
+
 local function activateShield(player)
 	local plot = PlotManager.GetPlotByOwner(player)
 	if not plot then
@@ -86,15 +120,16 @@ local function activateShield(player)
 		return { success = false, reason = ("Shield recharging (%ds)"):format(math.ceil(cooldownUntil - now())) }
 	end
 
+	local cost, duration = ProtectionService.ShieldTerms(plot)
 	local leaderstats = player:FindFirstChild("leaderstats")
-	if not leaderstats or leaderstats.Coins.Value < CONFIG.SHIELD.Cost then
+	if not leaderstats or leaderstats.Coins.Value < cost then
 		return { success = false, reason = "Not enough coins" }
 	end
 
-	leaderstats.Coins.Value -= CONFIG.SHIELD.Cost
+	leaderstats.Coins.Value -= cost
 	plot:SetAttribute("ShieldCooldownUntil", now() + CONFIG.SHIELD.Cooldown)
-	ProtectionService.GrantShield(plot, CONFIG.SHIELD.Duration)
-	return { success = true }
+	ProtectionService.GrantShield(plot, duration)
+	return { success = true, duration = duration }
 end
 
 -- Pad locks -----------------------------------------------------------------
@@ -173,6 +208,37 @@ local function buyPadLock(player, padIndex)
 	return { success = true, level = level + 1 }
 end
 
+-- House stages ----------------------------------------------------------------
+
+local function buyBuilding(player)
+	local plot = PlotManager.GetPlotByOwner(player)
+	if not plot then
+		return { success = false, reason = "You don't have a plot" }
+	end
+
+	local nextLevel = HouseBuilder.GetLevel(plot) + 1
+	local stage = HouseBuilder.Stage(nextLevel)
+	if not stage then
+		return { success = false, reason = "Your house is complete" }
+	end
+
+	local leaderstats = player:FindFirstChild("leaderstats")
+	if not leaderstats or leaderstats.Coins.Value < stage.Cost then
+		return { success = false, reason = "Not enough coins" }
+	end
+
+	leaderstats.Coins.Value -= stage.Cost
+	HouseBuilder.SetLevel(plot, nextLevel)
+
+	-- A shield raised before the door existed keeps working; just swap its visual
+	if ProtectionService.IsShielded(plot) then
+		removeDome(plot)
+		buildDome(plot)
+	end
+
+	return { success = true, level = nextLevel, name = stage.Name }
+end
+
 -- Called when a non-owner completes the prompt hold. Returns true if the steal may proceed.
 -- Otherwise it tells both sides what happened and returns false.
 function ProtectionService.TrySteal(plot, pad, thief)
@@ -184,7 +250,7 @@ function ProtectionService.TrySteal(plot, pad, thief)
 	end
 
 	local placedAt = pad:GetAttribute("PlacedAt") or 0
-	local graceLeft = placedAt + CONFIG.PLACE_GRACE_SECONDS - now()
+	local graceLeft = placedAt + ProtectionService.GraceSeconds(plot) - now()
 	if graceLeft > 0 then
 		notify(thief, ("Just placed - protected for %ds"):format(math.ceil(graceLeft)), Color3.fromRGB(255, 200, 80), 2)
 		return false
@@ -227,6 +293,7 @@ function ProtectionService.OnPadStolen(pad)
 end
 
 function ProtectionService.ClearPlot(plot)
+	HouseBuilder.Clear(plot)
 	plot:SetAttribute("ShieldUntil", 0)
 	plot:SetAttribute("ShieldCooldownUntil", 0)
 	removeDome(plot)
@@ -238,5 +305,6 @@ end
 
 Remotes.ActivateShield.OnServerInvoke = activateShield
 Remotes.BuyPadLock.OnServerInvoke = buyPadLock
+Remotes.BuyBuilding.OnServerInvoke = buyBuilding
 
 return ProtectionService
