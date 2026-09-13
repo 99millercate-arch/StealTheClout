@@ -1,0 +1,24 @@
+# Rojo / build output
+*.rbxl
+*.rbxlx
+*.rbxm
+*.rbxmx
+*.rbxl.lock
+*.rbxlx.lock
+build/
+
+# Roblox Studio backups
+*.rbxl.bak
+*.rbxlx.bak
+
+# Tooling
+.aftman/
+.foreman/
+sourcemap.json
+
+# OS / editor
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+.idea/
