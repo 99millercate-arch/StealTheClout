@@ -136,7 +136,9 @@ end)
 
 local shopFrame = Instance.new("Frame")
 shopFrame.Size = UDim2.new(0, 240, 0, 140)
-shopFrame.Position = UDim2.new(1, -260, 0, 20)
+-- Right edge, vertically centred: keeps clear of the Roblox player list in the top-right
+shopFrame.AnchorPoint = Vector2.new(1, 0.5)
+shopFrame.Position = UDim2.new(1, -20, 0.5, 0)
 shopFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 shopFrame.BackgroundTransparency = 0.25
 shopFrame.Parent = screenGui

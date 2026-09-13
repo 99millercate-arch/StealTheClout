@@ -81,6 +81,7 @@ function PlacementService.SpawnCharacterOnPad(plot, pad, characterId, storedValu
 	prompt.HoldDuration = GameConfig.STEAL_HOLD_TIME
 	prompt.MaxActivationDistance = 10
 	prompt.RequiresLineOfSight = false
+	prompt.UIOffset = Vector2.new(0, 30) -- push the prompt down, away from the Info billboard
 	prompt.Parent = model.PrimaryPart
 
 	prompt.Triggered:Connect(function(triggeringPlayer)

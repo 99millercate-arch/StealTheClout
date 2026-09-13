@@ -35,7 +35,8 @@ function CharacterModelBuilder.Create(charData)
 	local billboard = Instance.new("BillboardGui")
 	billboard.Name = "Info"
 	billboard.Size = UDim2.new(0, 160, 0, 60)
-	billboard.StudsOffset = Vector3.new(0, 2.5, 0)
+	billboard.StudsOffset = Vector3.new(0, 3, 0) -- just above the head sphere
+	billboard.SizeOffset = Vector2.new(0, 0.5) -- anchor bottom edge at the offset point so it never hangs down into the ProximityPrompt
 	billboard.AlwaysOnTop = true
 	billboard.Parent = base
 
